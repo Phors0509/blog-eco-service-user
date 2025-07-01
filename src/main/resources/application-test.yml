@@ -1,0 +1,8 @@
+server:
+  port: 8080
+spring:
+  datasource:
+    driverClassName: org.postgresql.Driver
+    url: jdbc:postgresql://18.143.46.88:31672/playground
+    username: admin
+    password: m9NUOgb7xi6M3TKjstcHPXSF8EosmcJC

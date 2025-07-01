@@ -1,0 +1,94 @@
+server:
+  shutdown: graceful
+  tomcat.relaxed-query-chars: '|,{,},[,]'
+spring:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${EMAIL_USERNAME}
+    password: ${EMAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 3000
+          writetimeout: 5000
+  profiles:
+    active: local
+  application:
+    name: blog-backend
+  datasource:
+    hikari:
+      connection-timeout: 10000
+      keepalive-time: 600000
+      idle-timeout: 1200000
+      initialization-fail-timeout: 10000
+      max-lifetime: 3600000
+      maximum-pool-size: ${DB_POOL_MAX:10000}
+      minimum-idle: ${DB_POOL_MIN:10}
+      pool-name: ConnectionPool
+      register-mbeans: false
+      validation-timeout: 5000
+  zipkin:
+    enabled: ${ENABLE_ZIPKIN:false}
+    base-url: ${ZIPKIN_HOST:http://zipkin.logging:9411/}
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    time-zone: Asia/Phnom_Penh
+  jpa:
+    properties:
+      hibernate:
+        transaction:
+          jta:
+            platform: org.springframework.boot.orm.jpa.hibernate.SpringJtaPlatform
+    generate-ddl: false
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    open-in-view: false
+springdoc:
+  packagesToScan: kh.com.wingbank.demo.web
+  api-docs:
+    path: /api/v3/api-docs
+    enabled: ${SWAGGER_UI:true}
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: ${springdoc.api-docs.enabled}
+    operationsSorter: method
+    tagsSorter: alpha
+    tryItOutEnabled: true
+    filter: true
+wing:
+  logging:
+    enable: true
+
+logging:
+  level:
+    root: INFO
+    kh.com.blog: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{traceId:-NONE}] %-5level %logger{36} - %msg%n"
+management:
+  endpoints:
+    web:
+      exposure:
+        include: restart,shutdown,health,metrics,info,loggers,prometheus
+  endpoint:
+    shutdown:
+      enabled: true
+    restart:
+      enabled: true
+    health:
+      probes:
+        enabled: true
+    prometheus:
+      enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
