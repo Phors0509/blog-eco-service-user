@@ -48,10 +48,10 @@ spring:
     generate-ddl: false
     hibernate:
       ddl-auto: none
-    show-sql: false
+    show-sql: true
     open-in-view: false
 springdoc:
-  packagesToScan: kh.com.wingbank.demo.web
+  packagesToScan: kh.com.blog
   api-docs:
     path: /api/v3/api-docs
     enabled: ${SWAGGER_UI:true}
