@@ -4,9 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import kh.com.blog.controller.vo.request.LoginRequestVO;
+import kh.com.blog.controller.vo.request.RefreshTokenRequestVO;
 import kh.com.blog.controller.vo.request.RegisterRequestVO;
 import kh.com.blog.controller.vo.response.LoginResponseVO;
+import kh.com.blog.controller.vo.response.RefreshTokenResponseVO;
 import kh.com.blog.dto.request.LoginRequestDTO;
+import kh.com.blog.dto.request.RefreshTokenRequestDTO;
 import kh.com.blog.dto.request.RegisterRequestDTO;
 import kh.com.blog.dto.response.ResponseMessageBuilder;
 import kh.com.blog.service.UserService;
@@ -37,6 +40,22 @@ public class UserController {
 				objectMapper.convertValue(this.userService.loginUser(
 						objectMapper.convertValue(loginRequestVO, LoginRequestDTO.class)), LoginResponseVO.class);
 		return new ResponseMessageBuilder<LoginResponseVO>().addData(loginResponseVO).success().build();
+	}
+
+	@PostMapping("/refresh-token")
+	@Operation(method = "POST", summary = "Refresh user token", description = "Refresh the authentication token for a user in the blog application.")
+	public ResponseMessageBuilder.ResponseMessage<RefreshTokenResponseVO> refreshToken(@RequestBody @Validated RefreshTokenRequestVO refreshToken) {
+		RefreshTokenResponseVO refreshTokenResponseVO =
+				objectMapper.convertValue(this.userService.refreshToken(
+						objectMapper.convertValue(refreshToken, RefreshTokenRequestDTO.class)), RefreshTokenResponseVO.class);
+		return new ResponseMessageBuilder<RefreshTokenResponseVO>().addData(refreshTokenResponseVO).success().build();
+	}
+
+	@GetMapping("/me")
+	@Operation(method = "GET", summary = "Get current user info", description = "Retrieve the information of the currently authenticated user.")
+	public ResponseMessageBuilder.ResponseMessage<LoginResponseVO> getCurrentUserInfo() {
+
+		return new ResponseMessageBuilder<LoginResponseVO>().success().build();
 	}
 
 	@Operation(method = "GET", summary = "List all users", description = "Retrieve a list of all users in the blog application.")

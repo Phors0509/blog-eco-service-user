@@ -11,5 +11,5 @@ public class LoginResponseDTO {
 	private String profilePicture;
 	private String coverImage;
 	private String refreshToken;
-	private String token;
+	private String accessToken;
 }

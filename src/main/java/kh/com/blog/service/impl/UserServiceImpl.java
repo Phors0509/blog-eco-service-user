@@ -3,8 +3,10 @@ package kh.com.blog.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kh.com.blog.common.utils.JwtUtil;
 import kh.com.blog.dto.request.LoginRequestDTO;
+import kh.com.blog.dto.request.RefreshTokenRequestDTO;
 import kh.com.blog.dto.request.RegisterRequestDTO;
 import kh.com.blog.dto.response.LoginResponseDTO;
+import kh.com.blog.dto.response.RefreshTokenResponseDTO;
 import kh.com.blog.dto.response.UserInfoDTO;
 import kh.com.blog.entity.UserEntity;
 import kh.com.blog.exception.BusinessException;
@@ -67,7 +69,7 @@ public class UserServiceImpl implements UserService {
 			if (!passwordEncoder.matches(loginRequestDTO.getPassword(), userEntity.getPassword())) {
 				throw new BusinessException("Incorrect password.");
 			}
-
+			// set to UserInfoDTO for JWT token generation
 			UserInfoDTO userInfoDTO = new UserInfoDTO();
 			userInfoDTO.setId(userEntity.getId());
 			userInfoDTO.setUsername(userEntity.getUsername());
@@ -75,15 +77,14 @@ public class UserServiceImpl implements UserService {
 			userInfoDTO.setRole(userEntity.getRole());
 			userInfoDTO.setIsVerified(userEntity.isVerified());
 			userInfoDTO.setAccountLevel(userEntity.getAccountLevel().name());
-
 			// generate JWT token
 			String token = jwtUtil.generateToken(userInfoDTO);
-			log.info("tokesssn : " + token);
+			String refreshToken = jwtUtil.generateRefreshToken(userInfoDTO);
 			// update last login time
 			userEntity.setLastLogin(LocalDateTime.now());
 			// save the updated user entity
 			userRepository.save(userEntity);
-
+			// create and return LoginResponseDTO
 			LoginResponseDTO loginResponseDTO = new LoginResponseDTO();
 			loginResponseDTO.setId(userEntity.getId());
 			loginResponseDTO.setUsername(userEntity.getUsername());
@@ -91,10 +92,34 @@ public class UserServiceImpl implements UserService {
 			loginResponseDTO.setProfilePicture(userEntity.getProfilePicture());
 			loginResponseDTO.setCoverImage(userEntity.getCoverImage());
 			loginResponseDTO.setEmail(userEntity.getEmail());
-			loginResponseDTO.setToken(token);
+			loginResponseDTO.setAccessToken(token);
+			loginResponseDTO.setRefreshToken(refreshToken);
 			return loginResponseDTO;
 		} catch (Exception e) {
 			log.error("(UserServiceImpl) loginUser(): Failed to login user: " + e.getMessage());
+			throw new BusinessException(e.getMessage());
+		}
+	}
+
+	@Override
+	public RefreshTokenResponseDTO refreshToken(RefreshTokenRequestDTO refreshToken) {
+		try {
+			// validate the refresh token
+			if (!jwtUtil.validateToken(refreshToken.getRefreshToken())) {
+				throw new BusinessException("Invalid refresh token.");
+			}
+			// extract user info from the refresh token
+			UserInfoDTO userInfo = jwtUtil.extractUserInfo(refreshToken.getRefreshToken());
+			// generate a new access token
+			String newAccessToken = jwtUtil.generateToken(userInfo);
+			String newRefreshToken = jwtUtil.generateRefreshToken(userInfo);
+			// create and return RefreshTokenResponseDTO
+			RefreshTokenResponseDTO response = new RefreshTokenResponseDTO();
+			response.setAccessToken(newAccessToken);
+			response.setRefreshToken(newRefreshToken);
+			return response;
+		} catch (Exception e) {
+			log.error("(UserServiceImpl) refreshToken(): Failed to refresh token: " + e.getMessage());
 			throw new BusinessException(e.getMessage());
 		}
 	}
