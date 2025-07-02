@@ -1,12 +1,13 @@
 package kh.com.blog.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import kh.com.blog.common.utils.JwtUtil;
+import kh.com.blog.security.JwtService;
 import kh.com.blog.dto.request.LoginRequestDTO;
 import kh.com.blog.dto.request.RefreshTokenRequestDTO;
 import kh.com.blog.dto.request.RegisterRequestDTO;
 import kh.com.blog.dto.response.LoginResponseDTO;
 import kh.com.blog.dto.response.RefreshTokenResponseDTO;
+import kh.com.blog.dto.response.UserDetailResponseDTO;
 import kh.com.blog.dto.response.UserInfoDTO;
 import kh.com.blog.entity.UserEntity;
 import kh.com.blog.exception.BusinessException;
@@ -15,6 +16,7 @@ import kh.com.blog.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +30,7 @@ public class UserServiceImpl implements UserService {
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final ObjectMapper objectMapper;
-	private final JwtUtil jwtUtil;
+	private final JwtService jwtService;
 
 	@Override
 	public void registerUser(RegisterRequestDTO registerRequestDTO) {
@@ -78,8 +80,8 @@ public class UserServiceImpl implements UserService {
 			userInfoDTO.setIsVerified(userEntity.isVerified());
 			userInfoDTO.setAccountLevel(userEntity.getAccountLevel().name());
 			// generate JWT token
-			String token = jwtUtil.generateToken(userInfoDTO);
-			String refreshToken = jwtUtil.generateRefreshToken(userInfoDTO);
+			String token = jwtService.generateToken(userInfoDTO);
+			String refreshToken = jwtService.generateRefreshToken(userInfoDTO);
 			// update last login time
 			userEntity.setLastLogin(LocalDateTime.now());
 			// save the updated user entity
@@ -105,14 +107,14 @@ public class UserServiceImpl implements UserService {
 	public RefreshTokenResponseDTO refreshToken(RefreshTokenRequestDTO refreshToken) {
 		try {
 			// validate the refresh token
-			if (!jwtUtil.validateToken(refreshToken.getRefreshToken())) {
+			if (!jwtService.validateToken(refreshToken.getRefreshToken())) {
 				throw new BusinessException("Invalid refresh token.");
 			}
 			// extract user info from the refresh token
-			UserInfoDTO userInfo = jwtUtil.extractUserInfo(refreshToken.getRefreshToken());
+			UserInfoDTO userInfo = jwtService.extractUserInfo(refreshToken.getRefreshToken());
 			// generate a new access token
-			String newAccessToken = jwtUtil.generateToken(userInfo);
-			String newRefreshToken = jwtUtil.generateRefreshToken(userInfo);
+			String newAccessToken = jwtService.generateToken(userInfo);
+			String newRefreshToken = jwtService.generateRefreshToken(userInfo);
 			// create and return RefreshTokenResponseDTO
 			RefreshTokenResponseDTO response = new RefreshTokenResponseDTO();
 			response.setAccessToken(newAccessToken);
@@ -120,6 +122,18 @@ public class UserServiceImpl implements UserService {
 			return response;
 		} catch (Exception e) {
 			log.error("(UserServiceImpl) refreshToken(): Failed to refresh token: " + e.getMessage());
+			throw new BusinessException(e.getMessage());
+		}
+	}
+
+	@Override
+	public UserDetailResponseDTO getCurrentUserDetail() {
+		try {
+			var authentication = SecurityContextHolder.getContext().getAuthentication();
+			log.info("(UserServiceImpl) getCurrentUserDetail(): Authentication: " + authentication);
+			return null;
+		} catch (Exception e) {
+			log.error("(UserServiceImpl) getCurrentUserDetail(): Failed to get current user detail: " + e.getMessage());
 			throw new BusinessException(e.getMessage());
 		}
 	}

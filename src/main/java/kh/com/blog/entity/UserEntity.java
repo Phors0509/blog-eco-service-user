@@ -87,12 +87,10 @@ public class UserEntity {
 	private List<UserEntity> blockedUsers;
 
 	@ElementCollection
-	@CollectionTable(name = "users_posts", joinColumns = @JoinColumn(name = "users_id"))
 	@Column(name = "posts_id")
 	private List<String> posts;
 
 	@ElementCollection
-	@CollectionTable(name = "user_liked_posts", joinColumns = @JoinColumn(name = "users_id"))
 	@Column(name = "posts_id")
 	private List<String> likedPosts;
 

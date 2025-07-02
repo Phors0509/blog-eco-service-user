@@ -1,4 +1,4 @@
-package kh.com.blog.common.utils;
+package kh.com.blog.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -8,14 +8,15 @@ import kh.com.blog.dto.response.UserInfoDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.Map;
 
 @Slf4j
-@Component
-public class JwtUtil {
+@Service
+public class JwtService {
 
 	@Value("${spring.jwt.secret}")
 	private String secret;
@@ -88,6 +89,11 @@ public class JwtUtil {
 		user.setAccountLevel((String) claims.get(CLAIM_ACCOUNT_LEVEL));
 
 		return user;
+	}
+
+	public String extractUsername(String token) {
+		Claims claims = getClaims(token);
+		return (String) claims.get(CLAIM_USERNAME);
 	}
 
 	// This method validates the JWT token and checks for its expiration, signature, and format.

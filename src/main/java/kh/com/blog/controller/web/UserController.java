@@ -8,10 +8,12 @@ import kh.com.blog.controller.vo.request.RefreshTokenRequestVO;
 import kh.com.blog.controller.vo.request.RegisterRequestVO;
 import kh.com.blog.controller.vo.response.LoginResponseVO;
 import kh.com.blog.controller.vo.response.RefreshTokenResponseVO;
+import kh.com.blog.controller.vo.response.UserDetailResponseVO;
 import kh.com.blog.dto.request.LoginRequestDTO;
 import kh.com.blog.dto.request.RefreshTokenRequestDTO;
 import kh.com.blog.dto.request.RegisterRequestDTO;
 import kh.com.blog.dto.response.ResponseMessageBuilder;
+import kh.com.blog.dto.response.UserDetailResponseDTO;
 import kh.com.blog.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -53,9 +55,10 @@ public class UserController {
 
 	@GetMapping("/me")
 	@Operation(method = "GET", summary = "Get current user info", description = "Retrieve the information of the currently authenticated user.")
-	public ResponseMessageBuilder.ResponseMessage<LoginResponseVO> getCurrentUserInfo() {
-
-		return new ResponseMessageBuilder<LoginResponseVO>().success().build();
+	public ResponseMessageBuilder.ResponseMessage<UserDetailResponseVO> getCurrentUserDetail() {
+		UserDetailResponseDTO userDetailResponseDTO = this.userService.getCurrentUserDetail();
+		UserDetailResponseVO userDetailResponseVO = objectMapper.convertValue(userDetailResponseDTO, UserDetailResponseVO.class);
+		return new ResponseMessageBuilder<UserDetailResponseVO>().addData(userDetailResponseVO).success().build();
 	}
 
 	@Operation(method = "GET", summary = "List all users", description = "Retrieve a list of all users in the blog application.")
