@@ -2,6 +2,9 @@ server:
   shutdown: graceful
   tomcat.relaxed-query-chars: '|,{,},[,]'
 spring:
+  jwt:
+    secret: ${SECRET}
+    expiration: 3600000
   mail:
     host: smtp.gmail.com
     port: 587

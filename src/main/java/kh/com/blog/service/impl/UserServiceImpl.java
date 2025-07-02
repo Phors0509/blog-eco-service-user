@@ -1,8 +1,11 @@
 package kh.com.blog.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import kh.com.blog.common.utils.JwtUtil;
 import kh.com.blog.dto.request.LoginRequestDTO;
 import kh.com.blog.dto.request.RegisterRequestDTO;
+import kh.com.blog.dto.response.LoginResponseDTO;
+import kh.com.blog.dto.response.UserInfoDTO;
 import kh.com.blog.entity.UserEntity;
 import kh.com.blog.exception.BusinessException;
 import kh.com.blog.repository.UserRepository;
@@ -23,6 +26,7 @@ public class UserServiceImpl implements UserService {
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final ObjectMapper objectMapper;
+	private final JwtUtil jwtUtil;
 
 	@Override
 	public void registerUser(RegisterRequestDTO registerRequestDTO) {
@@ -45,29 +49,53 @@ public class UserServiceImpl implements UserService {
 			// save user to the database
 			userRepository.save(user);
 		} catch (Exception e) {
-			throw new BusinessException("(UserServiceImpl) registerUser(): Failed to register user:  " + e.getMessage());
+			log.error("(UserServiceImpl) registerUser(): Failed to register user: " + e.getMessage());
+			throw new BusinessException(e.getMessage());
 		}
 	}
 
 	@Override
-	public void loginUser(LoginRequestDTO loginRequestDTO) {
+	public LoginResponseDTO loginUser(LoginRequestDTO loginRequestDTO) {
 		try {
 			// find a user by username
 			UserEntity userEntity = userRepository.findByUsername(loginRequestDTO.getUsername());
-			// if a user does not exist or password does not match, throw BusinessException
+			// if a user does not exist or the password does not match, throw BusinessException
 			if (ObjectUtils.isEmpty(userEntity)) {
-				throw new BusinessException("Invalid credentials: User not found.");
+				throw new BusinessException("Invalid username");
 			}
 			// check if the password matches
 			if (!passwordEncoder.matches(loginRequestDTO.getPassword(), userEntity.getPassword())) {
-				throw new BusinessException("Invalid credentials: Incorrect password.");
+				throw new BusinessException("Incorrect password.");
 			}
+
+			UserInfoDTO userInfoDTO = new UserInfoDTO();
+			userInfoDTO.setId(userEntity.getId());
+			userInfoDTO.setUsername(userEntity.getUsername());
+			userInfoDTO.setEmail(userEntity.getEmail());
+			userInfoDTO.setRole(userEntity.getRole());
+			userInfoDTO.setIsVerified(userEntity.isVerified());
+			userInfoDTO.setAccountLevel(userEntity.getAccountLevel().name());
+
+			// generate JWT token
+			String token = jwtUtil.generateToken(userInfoDTO);
+			log.info("tokesssn : " + token);
 			// update last login time
 			userEntity.setLastLogin(LocalDateTime.now());
 			// save the updated user entity
 			userRepository.save(userEntity);
+
+			LoginResponseDTO loginResponseDTO = new LoginResponseDTO();
+			loginResponseDTO.setId(userEntity.getId());
+			loginResponseDTO.setUsername(userEntity.getUsername());
+			loginResponseDTO.setBio(userEntity.getBio());
+			loginResponseDTO.setProfilePicture(userEntity.getProfilePicture());
+			loginResponseDTO.setCoverImage(userEntity.getCoverImage());
+			loginResponseDTO.setEmail(userEntity.getEmail());
+			loginResponseDTO.setToken(token);
+			return loginResponseDTO;
 		} catch (Exception e) {
-			throw new BusinessException("(UserServiceImpl) loginUser(): Failed to login user: " + e.getMessage());
+			log.error("(UserServiceImpl) loginUser(): Failed to login user: " + e.getMessage());
+			throw new BusinessException(e.getMessage());
 		}
 	}
 }
