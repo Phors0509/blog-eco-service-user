@@ -1,7 +1,6 @@
 package kh.com.blog.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import kh.com.blog.security.JwtService;
 import kh.com.blog.dto.request.LoginRequestDTO;
 import kh.com.blog.dto.request.RefreshTokenRequestDTO;
 import kh.com.blog.dto.request.RegisterRequestDTO;
@@ -11,7 +10,9 @@ import kh.com.blog.dto.response.UserDetailResponseDTO;
 import kh.com.blog.dto.response.UserInfoDTO;
 import kh.com.blog.entity.UserEntity;
 import kh.com.blog.exception.BusinessException;
+import kh.com.blog.mapper.UserMapper;
 import kh.com.blog.repository.UserRepository;
+import kh.com.blog.security.JwtService;
 import kh.com.blog.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,7 @@ public class UserServiceImpl implements UserService {
 	private final PasswordEncoder passwordEncoder;
 	private final ObjectMapper objectMapper;
 	private final JwtService jwtService;
+	private final UserMapper mapper;
 
 	@Override
 	public void registerUser(RegisterRequestDTO registerRequestDTO) {
@@ -78,7 +80,7 @@ public class UserServiceImpl implements UserService {
 			userInfoDTO.setEmail(userEntity.getEmail());
 			userInfoDTO.setRole(userEntity.getRole());
 			userInfoDTO.setIsVerified(userEntity.isVerified());
-			userInfoDTO.setAccountLevel(userEntity.getAccountLevel().name());
+			userInfoDTO.setAccountLevel(userEntity.getAccountLevel());
 			// generate JWT token
 			String token = jwtService.generateToken(userInfoDTO);
 			String refreshToken = jwtService.generateRefreshToken(userInfoDTO);
@@ -87,13 +89,7 @@ public class UserServiceImpl implements UserService {
 			// save the updated user entity
 			userRepository.save(userEntity);
 			// create and return LoginResponseDTO
-			LoginResponseDTO loginResponseDTO = new LoginResponseDTO();
-			loginResponseDTO.setId(userEntity.getId());
-			loginResponseDTO.setUsername(userEntity.getUsername());
-			loginResponseDTO.setBio(userEntity.getBio());
-			loginResponseDTO.setProfilePicture(userEntity.getProfilePicture());
-			loginResponseDTO.setCoverImage(userEntity.getCoverImage());
-			loginResponseDTO.setEmail(userEntity.getEmail());
+			LoginResponseDTO loginResponseDTO = mapper.fromLogin(userEntity);
 			loginResponseDTO.setAccessToken(token);
 			loginResponseDTO.setRefreshToken(refreshToken);
 			return loginResponseDTO;
@@ -130,8 +126,18 @@ public class UserServiceImpl implements UserService {
 	public UserDetailResponseDTO getCurrentUserDetail() {
 		try {
 			var authentication = SecurityContextHolder.getContext().getAuthentication();
-			log.info("(UserServiceImpl) getCurrentUserDetail(): Authentication: " + authentication);
-			return null;
+			String username = authentication.getPrincipal().toString();
+			if (ObjectUtils.isEmpty(username)) {
+				throw new BusinessException("User is not authenticated.");
+			}
+			// find the user by username
+			UserEntity userEntity = userRepository.findByUsername(username);
+			// if the user does not exist, throw BusinessException
+			if (ObjectUtils.isEmpty(userEntity)) {
+				throw new BusinessException("User not found.");
+			}
+			// convert UserEntity to UserDetailResponseDTO
+			return mapper.from(userEntity);
 		} catch (Exception e) {
 			log.error("(UserServiceImpl) getCurrentUserDetail(): Failed to get current user detail: " + e.getMessage());
 			throw new BusinessException(e.getMessage());

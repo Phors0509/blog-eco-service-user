@@ -1,5 +1,6 @@
 package kh.com.blog.dto.response;
 
+import kh.com.blog.common.enumeration.AccountLevel;
 import kh.com.blog.common.enumeration.Role;
 import lombok.Data;
 
@@ -10,5 +11,5 @@ public class UserInfoDTO {
 	private String email;
 	private Role role;
 	private Boolean isVerified;
-	private String accountLevel;
+	private AccountLevel accountLevel;
 }

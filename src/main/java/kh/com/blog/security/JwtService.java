@@ -3,6 +3,7 @@ package kh.com.blog.security;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import kh.com.blog.common.enumeration.AccountLevel;
 import kh.com.blog.common.enumeration.Role;
 import kh.com.blog.dto.response.UserInfoDTO;
 import lombok.extern.slf4j.Slf4j;
@@ -86,7 +87,7 @@ public class JwtService {
 		user.setEmail((String) claims.get(CLAIM_EMAIL));
 		user.setRole(Role.valueOf((String) claims.get(CLAIM_ROLE)));
 		user.setIsVerified((Boolean) claims.get(CLAIM_IS_VERIFIED));
-		user.setAccountLevel((String) claims.get(CLAIM_ACCOUNT_LEVEL));
+		user.setAccountLevel(AccountLevel.valueOf((String) claims.get(CLAIM_ACCOUNT_LEVEL)));
 
 		return user;
 	}
